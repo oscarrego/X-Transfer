@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Environment variables & secrets (CRITICAL: Do not leak API keys)
+.env
+.env.local
+.env.*.local
+backend/.env
+
+# Build outputs
+dist/
+build/
+*/dist/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
