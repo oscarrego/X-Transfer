@@ -7,7 +7,10 @@ function Topbar({ active }: { active?: string }) {
   return (
     <nav className="topbar">
       <div className="topbar-inner">
-        <div className="topbar-logo">X <span>Transfer</span></div>
+        <Link to="/" className="topbar-brand" title="X Transfer - Home">
+          <span className="brand-badge">X</span>
+          <span className="brand-name">Transfer</span>
+        </Link>
         <div className="topbar-nav">
           <Link to="/" className={active === 'home' ? 'active' : ''}>Accounts</Link>
           <Link to="/subscriptions" className={active === 'subs' ? 'active' : ''}>Subscriptions</Link>

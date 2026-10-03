@@ -25,8 +25,7 @@ export function handleYouTubeError(err: any, fallbackMessage: string): CleanErro
       body: {
         error: 'quota_exceeded',
         isQuota: true,
-        message:
-          'YouTube Data API daily quota limit reached (10,000 units). Google automatically resets your quota at midnight Pacific Time (~12:30 PM IST). Any progress already made has been saved.',
+        message: 'YouTube daily transfer quota reached. Quota resets daily at midnight PT.',
       },
     }
   }
