@@ -703,3 +703,52 @@ input[type="checkbox"] {
 .mb-8 { margin-bottom: 8px; }
 .mb-16 { margin-bottom: 16px; }
 .mb-24 { margin-bottom: 24px; }
+
+/* ── Modal ───────────────────────────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 24px;
+}
+
+.modal-box {
+  background: var(--white);
+  border: var(--border);
+  border-radius: 6px;
+  max-width: 440px;
+  width: 100%;
+  padding: 32px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+}
+
+.modal-icon {
+  font-size: 28px;
+  margin-bottom: 12px;
+  color: var(--warning);
+}
+
+.modal-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--black);
+  margin-bottom: 14px;
+  letter-spacing: -0.01em;
+}
+
+.modal-body {
+  font-size: 13px;
+  color: var(--gray-700);
+  line-height: 1.7;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 24px;
+}

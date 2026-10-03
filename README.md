@@ -1,101 +1,197 @@
-# X Transfer — YouTube Subscription Migrator
+# X Transfer - YouTube Subscription Migrator
 
-Transfer all your YouTube subscriptions from one Google account to another.
+Transfer all your YouTube subscriptions from one Google account to another in one click.
 
-## Setup
-
-### 1. Google Cloud Project
-
-1. Go to [console.cloud.google.com](https://console.cloud.google.com)
-2. Create a new project (name it anything, e.g. "X Transfer")
-3. Go to **APIs & Services → Library**
-4. Search for **YouTube Data API v3** and click **Enable**
-5. Search for **Google People API** and click **Enable**
-
-### 2. OAuth 2.0 Credentials
-
-1. Go to **APIs & Services → Credentials**
-2. Click **Create Credentials → OAuth client ID**
-3. Application type: **Web application**
-4. Name: `X Transfer`
-5. Under **Authorized redirect URIs**, add both:
-   - `http://localhost:3001/auth/google/source/callback`
-   - `http://localhost:3001/auth/google/target/callback`
-6. Click **Create** — save your **Client ID** and **Client Secret**
-
-### 3. OAuth Consent Screen
-
-1. Go to **APIs & Services → OAuth consent screen**
-2. User type: **External** → Create
-3. Fill in App name, user support email, developer email
-4. Add scopes:
-   - `./auth/youtube.readonly`
-   - `./auth/youtube`
-   - `email`, `profile`, `openid`
-5. Under **Test users**, add BOTH your Google accounts (old and new)
-6. Save
-
-### 4. Configure Backend
-
-```bash
-cd backend
-cp .env.example .env
-```
-
-Edit `.env`:
-```
-GOOGLE_CLIENT_ID=your_client_id_from_step_2
-GOOGLE_CLIENT_SECRET=your_client_secret_from_step_2
-SESSION_SECRET=any_long_random_string_here
-PORT=3001
-FRONTEND_URL=http://localhost:5173
-```
-
-### 5. Install & Run
-
-**Backend:**
-```bash
-cd backend
-npm install
-npm run dev
-```
-
-**Frontend** (new terminal):
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Open [http://localhost:5173](http://localhost:5173) in your browser.
+No third-party service needed. Runs 100% on your local machine. Free to use.
 
 ---
 
-## Usage
+## Why This Exists
 
-1. **Accounts tab** — Click "Sign in with Google" under Source Account, choose your OLD account
-2. Click "Sign in with Google" under Target Account, choose your NEW account
-3. **Subscriptions tab** — Click "Fetch subscriptions" to load all your channels
-   - Search, filter, select/deselect channels
-   - Copy individual or all links to clipboard
-4. Click **Transfer → channels** in the action bar
-5. **Transfer tab** — Click "Start Transfer" and watch the live progress
-6. When done, export the log as `.txt` for your records
+When switching Google accounts, YouTube offers no built-in way to copy your subscriptions.
+Doing it manually means visiting hundreds of channels one by one.
+
+X Transfer solves this by connecting both your old account (source) and new account (target),
+fetching all subscriptions from the source, and subscribing the target account to all of them
+automatically - with live progress, pause/resume support, and a full transfer log.
+
+---
+
+## How It Works
+
+1. You connect your **old Google account** (source) - read-only access to fetch your subscription list
+2. You connect your **new Google account** (target) - write access to subscribe to channels
+3. The app fetches all subscribed channels from the source account
+4. You review, search, and select which channels to transfer (or select all)
+5. Click **Start Transfer** - the app subscribes the target account to each channel one by one
+6. Watch live progress with per-channel status (subscribed / skipped / failed)
+7. When done, review any skipped or failed channels with their names and links
+
+---
+
+## Features
+
+- Dual Google OAuth - two separate accounts, each with proper scopes
+- Full subscription list with search, filter, and checkboxes
+- Copy individual channel links or all links to clipboard
+- Live streaming transfer progress (no page reload needed)
+- Pause and resume mid-transfer
+- Stop button to cancel at any time
+- Quota exceeded detection with popup notification
+- Skipped and failed channels shown with names, links, and copy button
+- Export full transfer log as a .txt file
+- Done button at the bottom redirects back to home
 
 ---
 
 ## YouTube API Quota
 
-- Each subscription insert costs **50 quota units**
-- Default daily limit is **10,000 units** = **200 channels/day**
-- If you have more than 200 subscriptions, run the transfer over multiple days
-- To increase quota: [Google Cloud Console → IAM & Quota](https://console.cloud.google.com/iam-admin/quotas)
+YouTube Data API has a default free quota of **10,000 units per day**.
+
+Each subscription insert costs **50 units**, so you can transfer around **200 channels per day** for free.
+
+If you have more than 200 subscriptions:
+- The transfer will stop automatically when quota is hit
+- A popup will notify you with how many channels are remaining
+- Come back the next day and run transfer again
+- Already-subscribed channels are skipped automatically, so you never double-subscribe
+
+To increase your quota, visit: https://console.cloud.google.com and request a quota increase for YouTube Data API v3.
+
+---
+
+## Requirements
+
+- Node.js v18 or higher
+- A Google Cloud project (free)
+- YouTube Data API v3 enabled
+- OAuth 2.0 credentials
+
+---
+
+## Google Cloud Setup (One-Time, 10 Minutes)
+
+### Step 1 - Create a Google Cloud Project
+
+1. Go to https://console.cloud.google.com
+2. Click the project dropdown at the top - New Project
+3. Name it `X Transfer` - click Create
+
+### Step 2 - Enable YouTube Data API v3
+
+1. In the left menu - APIs and Services - Library
+2. Search for **YouTube Data API v3** - click Enable
+
+### Step 3 - Configure OAuth Consent Screen
+
+1. APIs and Services - OAuth consent screen
+2. User type: **External** - Create
+3. App name: `X Transfer`
+4. Fill in your email for support and developer contact
+5. Scopes: skip for now - Save and Continue through all steps
+6. Under **Test users** - Add Users:
+   - Add your OLD Google account email
+   - Add your NEW Google account email
+7. Save
+
+### Step 4 - Create OAuth Credentials
+
+1. APIs and Services - Credentials - Create Credentials - OAuth client ID
+2. Application type: **Web application**
+3. Name: `X Transfer`
+4. Under **Authorized redirect URIs** - add both of these exactly:
+   ```
+   http://localhost:3001/auth/google/source/callback
+   http://localhost:3001/auth/google/target/callback
+   ```
+5. Click Create - copy the **Client ID** and **Client Secret**
+
+---
+
+## Environment Variables Setup
+
+### Step 1 - Create the .env file
+
+```powershell
+cd "X Transfer\backend"
+copy .env.example .env
+```
+
+### Step 2 - Open .env in Notepad and fill in:
+
+```env
+GOOGLE_CLIENT_ID=paste_your_client_id_here
+GOOGLE_CLIENT_SECRET=paste_your_client_secret_here
+SESSION_SECRET=any_long_random_string_you_make_up
+PORT=3001
+FRONTEND_URL=http://localhost:5173
+```
+
+| Variable | Where to get it |
+|---|---|
+| `GOOGLE_CLIENT_ID` | Google Cloud - Credentials - your OAuth client |
+| `GOOGLE_CLIENT_SECRET` | Same page as Client ID |
+| `SESSION_SECRET` | Make up any random string (e.g. `mysecretkey123abc`) |
+| `PORT` | Keep as `3001` |
+| `FRONTEND_URL` | Keep as `http://localhost:5173` |
+
+---
+
+## Installation
+
+```powershell
+# Install backend dependencies
+cd "X Transfer\backend"
+npm install
+
+# Install frontend dependencies
+cd "X Transfer\frontend"
+npm install
+```
+
+---
+
+## Running the App
+
+**Option 1 - One click (recommended):**
+
+Double-click `start.bat` in the X Transfer folder. It starts both servers and opens your browser automatically.
+
+**Option 2 - Manual (two terminals):**
+
+Terminal 1 - Backend:
+```powershell
+cd "X Transfer\backend"
+npm run dev
+```
+
+Terminal 2 - Frontend:
+```powershell
+cd "X Transfer\frontend"
+npm run dev
+```
+
+Then open http://localhost:5173 in your browser.
+
+---
+
+## First Login Note
+
+When you click Sign in with Google, you may see a warning:
+**"Google hasn't verified this app"**
+
+This is normal for personal apps in testing mode. To proceed:
+1. Click **Advanced** (small link at the bottom of the warning)
+2. Click **Go to X Transfer (unsafe)**
+3. Review permissions and click **Continue**
 
 ---
 
 ## Tech Stack
 
-- **Frontend**: React 18 + Vite + TypeScript (plain CSS, no framework)
-- **Backend**: Node.js + Express + TypeScript
-- **Auth**: Google OAuth 2.0 (googleapis)
-- **API**: YouTube Data API v3
+- Frontend: React 18 + Vite + TypeScript (plain CSS, no UI framework)
+- Backend: Node.js + Express + TypeScript
+- Auth: Google OAuth 2.0 via googleapis library
+- YouTube: YouTube Data API v3
+- Sessions: express-session (in-memory, no database needed)
+- Streaming: NDJSON chunked response for real-time transfer progress

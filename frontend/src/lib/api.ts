@@ -27,7 +27,7 @@ export interface SubscriptionsResponse {
   total: number
 }
 
-export type TransferEventType = 'start' | 'progress' | 'done'
+export type TransferEventType = 'start' | 'progress' | 'done' | 'quota_exceeded'
 
 export interface TransferStartEvent {
   type: 'start'
@@ -51,7 +51,19 @@ export interface TransferDoneEvent {
   total: number
 }
 
-export type TransferEvent = TransferStartEvent | TransferProgressEvent | TransferDoneEvent
+export interface TransferQuotaEvent {
+  type: 'quota_exceeded'
+  channelId: string
+  index: number
+  total: number
+  remaining: number
+}
+
+export type TransferEvent =
+  | TransferStartEvent
+  | TransferProgressEvent
+  | TransferDoneEvent
+  | TransferQuotaEvent
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 

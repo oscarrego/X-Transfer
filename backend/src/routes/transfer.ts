@@ -81,7 +81,17 @@ router.post('/', async (req: Request, res: Response) => {
     } catch (err: any) {
       const reason: string = err?.errors?.[0]?.reason || err?.message || 'unknown'
 
-      if (reason === 'subscriptionDuplicate') {
+      // Detect quota exceeded — stop immediately and notify frontend
+      if (reason === 'quotaExceeded' || reason === 'dailyLimitExceeded' || reason === 'forbidden') {
+        send({
+          type: 'quota_exceeded',
+          channelId,
+          index: i + 1,
+          total: channelIds.length,
+          remaining: channelIds.length - i,
+        })
+        break // Stop processing — quota is exhausted for today
+      } else if (reason === 'subscriptionDuplicate') {
         skipped++
         send({
           type: 'progress',
@@ -104,7 +114,7 @@ router.post('/', async (req: Request, res: Response) => {
       }
     }
 
-    // Rate limiting — avoid hitting quota
+    // Rate limiting - avoid hitting quota
     if (i < channelIds.length - 1) {
       await sleep(RATE_LIMIT_MS)
     }
