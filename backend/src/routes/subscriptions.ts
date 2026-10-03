@@ -1,15 +1,22 @@
 import { Router, Request, Response } from 'express'
 import { google } from 'googleapis'
+import { getPersistentAuth } from '../utils/persistentAuth'
+import { handleYouTubeError } from '../utils/errors'
 
 const router = Router()
 
 function getSourceClient(req: Request) {
-  if (!req.session.sourceTokens) return null
+  const tokens = req.session.sourceTokens || getPersistentAuth().sourceTokens
+  if (!tokens) return null
+
+  // Ensure session has it
+  req.session.sourceTokens = tokens
+
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET
   )
-  oauth2Client.setCredentials(req.session.sourceTokens)
+  oauth2Client.setCredentials(tokens)
   return oauth2Client
 }
 
@@ -58,7 +65,8 @@ router.get('/', async (req: Request, res: Response) => {
     res.json({ subscriptions: allItems, total: allItems.length })
   } catch (err: any) {
     console.error('Subscriptions fetch error:', err?.message)
-    res.status(500).json({ error: 'Failed to fetch subscriptions' })
+    const clean = handleYouTubeError(err, 'Failed to fetch subscriptions')
+    res.status(clean.status).json(clean.body)
   }
 })
 

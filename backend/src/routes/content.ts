@@ -1,5 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { google } from 'googleapis'
+import { getPersistentAuth } from '../utils/persistentAuth'
+import { handleYouTubeError } from '../utils/errors'
 
 const router = Router()
 const RATE_LIMIT_MS = 1200
@@ -9,16 +11,22 @@ function sleep(ms: number) {
 }
 
 function getSourceClient(req: Request) {
-  if (!req.session.sourceTokens) return null
+  const tokens = req.session.sourceTokens || getPersistentAuth().sourceTokens
+  if (!tokens) return null
+  req.session.sourceTokens = tokens
+
   const c = new google.auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET)
-  c.setCredentials(req.session.sourceTokens)
+  c.setCredentials(tokens)
   return c
 }
 
 function getTargetClient(req: Request) {
-  if (!req.session.targetTokens) return null
+  const tokens = req.session.targetTokens || getPersistentAuth().targetTokens
+  if (!tokens) return null
+  req.session.targetTokens = tokens
+
   const c = new google.auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET)
-  c.setCredentials(req.session.targetTokens)
+  c.setCredentials(tokens)
   return c
 }
 
@@ -69,7 +77,8 @@ router.get('/watchlater', async (req: Request, res: Response) => {
       })
     }
     console.error('Watch Later fetch error:', err?.message)
-    res.status(500).json({ error: err?.message || 'Failed to fetch Watch Later' })
+    const clean = handleYouTubeError(err, 'Failed to fetch Watch Later')
+    res.status(clean.status).json(clean.body)
   }
 })
 
@@ -112,7 +121,8 @@ router.get('/playlists', async (req: Request, res: Response) => {
     res.json({ playlists, total: playlists.length })
   } catch (err: any) {
     console.error('Playlists fetch error:', err?.message)
-    res.status(500).json({ error: err?.message || 'Failed to fetch playlists' })
+    const clean = handleYouTubeError(err, 'Failed to fetch playlists')
+    res.status(clean.status).json(clean.body)
   }
 })
 
@@ -155,7 +165,8 @@ router.get('/playlists/:id/videos', async (req: Request, res: Response) => {
     res.json({ videos, total: videos.length })
   } catch (err: any) {
     console.error('Playlist videos fetch error:', err?.message)
-    res.status(500).json({ error: err?.message || 'Failed to fetch playlist videos' })
+    const clean = handleYouTubeError(err, 'Failed to fetch playlist videos')
+    res.status(clean.status).json(clean.body)
   }
 })
 

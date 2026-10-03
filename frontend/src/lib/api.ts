@@ -201,13 +201,21 @@ export async function disconnectAccount(role: 'source' | 'target') {
   })
 }
 
+function parseApiError(err: any, fallback: string): string {
+  const msg = err?.message || err?.error || fallback
+  if (typeof msg === 'string') {
+    return msg.replace(/<[^>]*>?/gm, '').trim() || fallback
+  }
+  return fallback
+}
+
 // ── Subscriptions ─────────────────────────────────────────────────────────────
 
 export async function fetchSubscriptions(): Promise<SubscriptionsResponse> {
   const res = await fetch('/api/subscriptions', { credentials: 'include' })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    throw new Error((err as any).error || 'Failed to fetch subscriptions')
+    throw new Error(parseApiError(err, 'Failed to fetch subscriptions'))
   }
   return res.json()
 }
@@ -226,7 +234,7 @@ export async function* startTransfer(
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    throw new Error((err as any).error || 'Transfer failed')
+    throw new Error(parseApiError(err, 'Transfer failed'))
   }
 
   yield* streamNDJSON<TransferEvent>(res)
@@ -242,7 +250,7 @@ export async function fetchWatchLater(): Promise<WatchLaterResponse> {
     if (error.error === 'api_limitation') {
       throw new Error('api_limitation:' + (error.message || ''))
     }
-    throw new Error(error.error || 'Failed to fetch Watch Later')
+    throw new Error(parseApiError(err, 'Failed to fetch Watch Later'))
   }
   return res.json()
 }
@@ -258,7 +266,7 @@ export async function* transferWatchLater(
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    throw new Error((err as any).error || 'Transfer failed')
+    throw new Error(parseApiError(err, 'Transfer failed'))
   }
   yield* streamNDJSON<ContentEvent>(res)
 }
@@ -269,7 +277,7 @@ export async function fetchPlaylists(): Promise<PlaylistsResponse> {
   const res = await fetch('/api/content/playlists', { credentials: 'include' })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    throw new Error((err as any).error || 'Failed to fetch playlists')
+    throw new Error(parseApiError(err, 'Failed to fetch playlists'))
   }
   return res.json()
 }
@@ -280,7 +288,7 @@ export async function fetchPlaylistVideos(playlistId: string): Promise<PlaylistV
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    throw new Error((err as any).error || 'Failed to fetch playlist videos')
+    throw new Error(parseApiError(err, 'Failed to fetch playlist videos'))
   }
   return res.json()
 }

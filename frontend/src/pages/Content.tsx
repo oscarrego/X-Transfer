@@ -1,6 +1,7 @@
-import { useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState, useRef } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import {
+  getAuthStatus,
   fetchWatchLater,
   fetchPlaylists,
   fetchPlaylistVideos,
@@ -12,6 +13,7 @@ import {
   PlaylistDoneEvent,
   copyToClipboard,
 } from '../lib/api'
+import QuotaNotice, { isQuotaExceeded } from '../components/QuotaNotice'
 import { Topbar } from './Home'
 
 
@@ -373,20 +375,19 @@ function WatchLaterTab() {
         </div>
       )}
 
-      {error && (
+      {error && isQuotaExceeded(error) ? (
+        <QuotaNotice onDismiss={() => setError(null)} customMessage={error} />
+      ) : error ? (
         <div className="info-box" style={{ background: 'var(--error-light)', color: 'var(--error)', border: '1px solid #ffc9c9' }}>
           <span>x</span><span>{error}</span>
         </div>
-      )}
+      ) : null}
 
       {/* Transfer progress */}
       {(transferring || transferDone) && (
         <div style={{ marginBottom: 20 }}>
           {quotaHit && (
-            <div className="info-box info-box-warn mb-16">
-              <span>!</span>
-              <span><strong>Quota limit hit.</strong> Come back tomorrow and run again - duplicates are skipped automatically.</span>
-            </div>
+            <QuotaNotice />
           )}
           {summary && (
             <div className="info-box info-box-success mb-16">
@@ -617,11 +618,13 @@ function PlaylistsTab() {
         </div>
       </div>
 
-      {error && (
+      {error && isQuotaExceeded(error) ? (
+        <QuotaNotice onDismiss={() => setError(null)} customMessage={error} />
+      ) : error ? (
         <div className="info-box" style={{ background: 'var(--error-light)', color: 'var(--error)', border: '1px solid #ffc9c9' }}>
           <span>x</span><span>{error}</span>
         </div>
-      )}
+      ) : null}
 
       {/* Quota estimate warning */}
       {!transferring && !transferDone && playlists.length > 0 && selected.size > 0 && (
@@ -643,10 +646,7 @@ function PlaylistsTab() {
       {(transferring || transferDone) && (
         <div style={{ marginBottom: 20 }}>
           {quotaHit && (
-            <div className="info-box info-box-warn mb-16">
-              <span>!</span>
-              <span><strong>Quota limit hit.</strong> Come back tomorrow and run again.</span>
-            </div>
+            <QuotaNotice />
           )}
           {currentAction && (
             <div className="flex-row mb-8" style={{ fontSize: 13, color: 'var(--gray-500)' }}>
@@ -838,6 +838,17 @@ type ContentTab = 'watchlater' | 'playlists'
 
 export default function Content() {
   const [tab, setTab] = useState<ContentTab>('playlists')
+  const [sourceConnected, setSourceConnected] = useState<boolean | null>(null)
+  const [targetConnected, setTargetConnected] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    getAuthStatus()
+      .then((s) => {
+        setSourceConnected(s.source.connected)
+        setTargetConnected(s.target.connected)
+      })
+      .catch(() => {})
+  }, [])
 
   return (
     <>
@@ -847,6 +858,31 @@ export default function Content() {
         <div className="page-subtitle">
           Transfer your Watch Later videos and created playlists to your new account.
         </div>
+
+        {sourceConnected === false && (
+          <div className="info-box info-box-warn mb-16">
+            <span>⚠</span>
+            <span>
+              Source account not connected.{' '}
+              <Link to="/" style={{ textDecoration: 'underline', fontWeight: 500 }}>
+                Connect it on the Accounts page →
+              </Link>
+            </span>
+          </div>
+        )}
+
+        {sourceConnected === true && targetConnected === false && (
+          <div className="info-box info-box-note mb-16">
+            <span>ⓘ</span>
+            <span>
+              Target account not connected.{' '}
+              <Link to="/" style={{ textDecoration: 'underline', fontWeight: 500 }}>
+                Connect it on the Accounts page →
+              </Link>{' '}
+              before running a transfer.
+            </span>
+          </div>
+        )}
 
         {/* Tab switcher */}
         <div className="content-tabs mb-24">

@@ -9,6 +9,7 @@ import {
   copyToClipboard,
 } from '../lib/api'
 import ProgressLog from '../components/ProgressLog'
+import QuotaNotice, { isQuotaExceeded } from '../components/QuotaNotice'
 import { Topbar } from './Home'
 
 type TransferState = 'idle' | 'running' | 'paused' | 'done' | 'error'
@@ -460,37 +461,28 @@ export default function Transfer() {
 
             {/* ── Error box ── */}
             {state === 'error' && (
-              <div
-                className="info-box mb-16"
-                style={{
-                  background: 'var(--error-light)',
-                  color: 'var(--error)',
-                  border: '1px solid #ffc9c9',
-                }}
-              >
-                <span>x</span>
-                <span>{errorMsg}</span>
-              </div>
+              isQuotaExceeded(errorMsg) ? (
+                <QuotaNotice customMessage={errorMsg || undefined} />
+              ) : (
+                <div
+                  className="info-box mb-16"
+                  style={{
+                    background: 'var(--error-light)',
+                    color: 'var(--error)',
+                    border: '1px solid #ffc9c9',
+                  }}
+                >
+                  <span>x</span>
+                  <span>{errorMsg}</span>
+                </div>
+              )
             )}
 
             {/* ── Quota warning ── */}
             {quotaEvent && (
-              <div className="info-box info-box-warn mb-16">
-                <span>!</span>
-                <span>
-                  <strong>Quota limit hit</strong> at channel {quotaEvent.index} of{' '}
-                  {quotaEvent.total}.{' '}
-                  <strong>{quotaEvent.remaining} channels</strong> were not transferred. Come back
-                  tomorrow and run again — duplicates are skipped automatically.{' '}
-                  <button
-                    className="btn btn-ghost btn-sm"
-                    style={{ display: 'inline', padding: '0 4px', textDecoration: 'underline', color: 'var(--warning)' }}
-                    onClick={() => setShowQuotaModal(true)}
-                  >
-                    Learn more
-                  </button>
-                </span>
-              </div>
+              <QuotaNotice
+                customMessage={`Quota limit hit at channel ${quotaEvent.index} of ${quotaEvent.total}. ${quotaEvent.remaining} channels were not transferred. Come back tomorrow and run again — duplicates are skipped automatically.`}
+              />
             )}
 
             {/* ── Success banner ── */}

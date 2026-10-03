@@ -1,5 +1,12 @@
 import { Router, Request, Response } from 'express'
 import { google } from 'googleapis'
+import {
+  getPersistentAuth,
+  saveSourceAuth,
+  saveTargetAuth,
+  clearRoleAuth,
+  clearAllAuth,
+} from '../utils/persistentAuth'
 
 const router = Router()
 
@@ -55,17 +62,23 @@ router.get('/google/source/callback', async (req: Request, res: Response) => {
     const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client })
     const { data: profile } = await oauth2.userinfo.get()
 
-    req.session.sourceTokens = {
+    const sourceTokens = {
       access_token: tokens.access_token!,
       refresh_token: tokens.refresh_token,
       expiry_date: tokens.expiry_date,
     }
-    req.session.sourceProfile = {
+    const sourceProfile = {
       id: profile.id!,
       email: profile.email!,
       name: profile.name!,
       picture: profile.picture!,
     }
+
+    req.session.sourceTokens = sourceTokens
+    req.session.sourceProfile = sourceProfile
+
+    // Persist to local disk so browser reloads / restarts never log user out
+    saveSourceAuth(sourceTokens, sourceProfile)
 
     await new Promise<void>((resolve, reject) =>
       req.session.save((err) => (err ? reject(err) : resolve()))
@@ -103,17 +116,23 @@ router.get('/google/target/callback', async (req: Request, res: Response) => {
     const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client })
     const { data: profile } = await oauth2.userinfo.get()
 
-    req.session.targetTokens = {
+    const targetTokens = {
       access_token: tokens.access_token!,
       refresh_token: tokens.refresh_token,
       expiry_date: tokens.expiry_date,
     }
-    req.session.targetProfile = {
+    const targetProfile = {
       id: profile.id!,
       email: profile.email!,
       name: profile.name!,
       picture: profile.picture!,
     }
+
+    req.session.targetTokens = targetTokens
+    req.session.targetProfile = targetProfile
+
+    // Persist to local disk so browser reloads / restarts never log user out
+    saveTargetAuth(targetTokens, targetProfile)
 
     await new Promise<void>((resolve, reject) =>
       req.session.save((err) => (err ? reject(err) : resolve()))
@@ -126,32 +145,50 @@ router.get('/google/target/callback', async (req: Request, res: Response) => {
 })
 
 // ── /auth/status ──────────────────────────────────────────────────────────────
-// Returns current session state for both accounts
+// Returns current auth state for both accounts (hydrates from persistent store)
 router.get('/status', (req: Request, res: Response) => {
+  const persistent = getPersistentAuth()
+
+  // Hydrate session if missing in memory (e.g. after reload or server restart)
+  if (!req.session.sourceTokens && persistent.sourceTokens) {
+    req.session.sourceTokens = persistent.sourceTokens
+    req.session.sourceProfile = persistent.sourceProfile
+  }
+  if (!req.session.targetTokens && persistent.targetTokens) {
+    req.session.targetTokens = persistent.targetTokens
+    req.session.targetProfile = persistent.targetProfile
+  }
+
+  const sourceProfile = req.session.sourceProfile || persistent.sourceProfile
+  const targetProfile = req.session.targetProfile || persistent.targetProfile
+
   res.json({
-    source: req.session.sourceProfile
-      ? { ...req.session.sourceProfile, connected: true }
+    source: sourceProfile
+      ? { ...sourceProfile, connected: true }
       : { connected: false },
-    target: req.session.targetProfile
-      ? { ...req.session.targetProfile, connected: true }
+    target: targetProfile
+      ? { ...targetProfile, connected: true }
       : { connected: false },
   })
 })
 
 // ── /auth/logout ──────────────────────────────────────────────────────────────
 router.post('/logout/:role', (req: Request, res: Response) => {
-  const { role } = req.params
+  const { role } = req.params as { role: 'source' | 'target' }
   if (role === 'source') {
     delete req.session.sourceTokens
     delete req.session.sourceProfile
+    clearRoleAuth('source')
   } else if (role === 'target') {
     delete req.session.targetTokens
     delete req.session.targetProfile
+    clearRoleAuth('target')
   }
   req.session.save(() => res.json({ ok: true }))
 })
 
 router.post('/logout/all', (req: Request, res: Response) => {
+  clearAllAuth()
   req.session.destroy(() => res.json({ ok: true }))
 })
 

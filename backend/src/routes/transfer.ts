@@ -1,6 +1,8 @@
 import { Router, Request, Response } from 'express'
 import { google } from 'googleapis'
 
+import { getPersistentAuth } from '../utils/persistentAuth'
+
 const router = Router()
 
 // Quota: each subscription insert = 50 units. Default daily quota = 10,000 units.
@@ -12,12 +14,17 @@ function sleep(ms: number) {
 }
 
 function getTargetClient(req: Request) {
-  if (!req.session.targetTokens) return null
+  const tokens = req.session.targetTokens || getPersistentAuth().targetTokens
+  if (!tokens) return null
+
+  // Ensure session has it
+  req.session.targetTokens = tokens
+
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET
   )
-  oauth2Client.setCredentials(req.session.targetTokens)
+  oauth2Client.setCredentials(tokens)
   return oauth2Client
 }
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { fetchSubscriptions, getAuthStatus, Channel, copyToClipboard } from '../lib/api'
 import ChannelTable from '../components/ChannelTable'
+import QuotaNotice, { isQuotaExceeded } from '../components/QuotaNotice'
 import { Topbar } from './Home'
 
 export default function Subscriptions() {
@@ -114,12 +115,14 @@ export default function Subscriptions() {
           </div>
         )}
 
-        {error && (
+        {error && isQuotaExceeded(error) ? (
+          <QuotaNotice onDismiss={() => setError(null)} customMessage={error} />
+        ) : error ? (
           <div className="info-box" style={{ background: 'var(--error-light)', color: 'var(--error)', border: '1px solid #ffc9c9' }}>
             <span>✗</span>
             <span>{error}</span>
           </div>
-        )}
+        ) : null}
 
         {channels.length === 0 && !loading && !error && sourceConnected && (
           <div className="empty-state">

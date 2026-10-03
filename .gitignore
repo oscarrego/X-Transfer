@@ -7,6 +7,9 @@ node_modules/
 .env.local
 .env.*.local
 backend/.env
+backend/.session-data.json
+.session-data.json
+.sessions/
 
 # Build outputs
 dist/
