@@ -1,6 +1,6 @@
 # X Transfer - YouTube Migrator
 
-Transfer all your YouTube subscriptions from one Google account to another in one click.
+Transfer all your YouTube subscriptions, playlists, and Watch Later videos from one Google account to another in one click.
 
 No third-party service needed. Runs 100% on your local machine. Free to use.
 
@@ -8,12 +8,12 @@ No third-party service needed. Runs 100% on your local machine. Free to use.
 
 ## Why This Exists
 
-When switching Google accounts, YouTube offers no built-in way to copy your subscriptions.
-Doing it manually means visiting hundreds of channels one by one.
+When switching Google accounts, YouTube offers no built-in way to copy your subscriptions or transfer your playlists.
+Doing it manually means visiting hundreds of channels and manually recreating playlists video by video.
 
 X Transfer solves this by connecting both your old account (source) and new account (target),
-fetching all subscriptions from the source, and subscribing the target account to all of them
-automatically - with live progress, pause/resume support, and a full transfer log.
+allowing you to migrate all your subscriptions, created playlists, and Watch Later videos
+automatically - with real-time streaming progress, pause/resume support, and full error logs.
 
 ---
 
@@ -37,13 +37,13 @@ automatically - with live progress, pause/resume support, and a full transfer lo
 
 YouTube Data API has a default free quota of **10,000 units per day**.
 
-Each subscription insert costs **50 units**, so you can transfer around **200 channels per day** for free.
+Each channel subscription or video insert costs **50 units**, so you can transfer around **200 items per day** for free.
 
-If you have more than 200 subscriptions:
+If you have more than 200 items:
 - The transfer will stop automatically when quota is hit
-- A popup will notify you with how many channels are remaining
-- Come back the next day and run transfer again
-- Already-subscribed channels are skipped automatically, so you never double-subscribe
+- A notification will show you exactly how many items remain
+- Come back the next day and resume the transfer
+- Already-transferred channels and videos are skipped automatically, preventing duplicates
 
 To increase your quota, visit: https://console.cloud.google.com and request a quota increase for YouTube Data API v3.
 
