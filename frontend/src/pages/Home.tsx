@@ -12,11 +12,13 @@ function Topbar({ active }: { active?: string }) {
           <Link to="/" className={active === 'home' ? 'active' : ''}>Accounts</Link>
           <Link to="/subscriptions" className={active === 'subs' ? 'active' : ''}>Subscriptions</Link>
           <Link to="/transfer" className={active === 'transfer' ? 'active' : ''}>Transfer</Link>
+          <Link to="/content" className={active === 'content' ? 'active' : ''}>My Content</Link>
         </div>
       </div>
     </nav>
   )
 }
+
 
 export { Topbar }
 

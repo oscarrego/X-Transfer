@@ -6,6 +6,7 @@ import { sessionMiddleware } from './middleware/session'
 import authRouter from './routes/auth'
 import subscriptionsRouter from './routes/subscriptions'
 import transferRouter from './routes/transfer'
+import contentRouter from './routes/content'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -27,6 +28,7 @@ app.use(passport.session())
 app.use('/auth', authRouter)
 app.use('/api/subscriptions', subscriptionsRouter)
 app.use('/api/transfer', transferRouter)
+app.use('/api/content', contentRouter)
 
 // Health check
 app.get('/api/health', (_req, res) => {

@@ -27,6 +27,46 @@ export interface SubscriptionsResponse {
   total: number
 }
 
+// ── Content types ─────────────────────────────────────────────────────────────
+
+export interface VideoItem {
+  videoId: string
+  title: string
+  channelTitle: string
+  thumbnail: string
+  videoUrl: string
+  addedAt?: string
+  position?: number
+}
+
+export interface PlaylistItem {
+  playlistId: string
+  title: string
+  description: string
+  thumbnail: string
+  videoCount: number
+  privacy: 'public' | 'private' | 'unlisted'
+  playlistUrl: string
+  videos?: VideoItem[] // loaded on demand
+}
+
+export interface WatchLaterResponse {
+  videos: VideoItem[]
+  total: number
+}
+
+export interface PlaylistsResponse {
+  playlists: PlaylistItem[]
+  total: number
+}
+
+export interface PlaylistVideosResponse {
+  videos: VideoItem[]
+  total: number
+}
+
+// ── Transfer event types ──────────────────────────────────────────────────────
+
 export type TransferEventType = 'start' | 'progress' | 'done' | 'quota_exceeded'
 
 export interface TransferStartEvent {
@@ -53,7 +93,7 @@ export interface TransferDoneEvent {
 
 export interface TransferQuotaEvent {
   type: 'quota_exceeded'
-  channelId: string
+  channelId?: string
   index: number
   total: number
   remaining: number
@@ -64,6 +104,79 @@ export type TransferEvent =
   | TransferProgressEvent
   | TransferDoneEvent
   | TransferQuotaEvent
+
+// ── Content transfer event types ──────────────────────────────────────────────
+
+export interface ContentProgressEvent {
+  type: 'progress'
+  index: number
+  total: number
+  itemId: string
+  status: 'success' | 'skipped' | 'error'
+  reason?: string
+}
+
+export interface ContentQuotaEvent {
+  type: 'quota_exceeded'
+  index: number
+  total: number
+  remaining: number
+}
+
+export interface ContentDoneEvent {
+  type: 'done'
+  succeeded: number
+  skipped: number
+  failed: number
+  total: number
+}
+
+export interface PlaylistCreatedEvent {
+  type: 'playlist_created'
+  index: number
+  total: number
+  title: string
+  newPlaylistId: string
+}
+
+export interface PlaylistFetchedEvent {
+  type: 'playlist_fetched'
+  title: string
+  videoCount: number
+}
+
+export interface PlaylistDoneEvent {
+  type: 'playlist_done'
+  index: number
+  total: number
+  title: string
+  newPlaylistId?: string
+  videoSucceeded?: number
+  videoFailed?: number
+  status: 'success' | 'error'
+  reason?: string
+}
+
+export interface PlaylistTransferDoneEvent {
+  type: 'done'
+  succeeded: number
+  failed: number
+  total: number
+}
+
+export type ContentEvent =
+  | { type: 'start'; total: number }
+  | ContentProgressEvent
+  | ContentQuotaEvent
+  | ContentDoneEvent
+
+export type PlaylistTransferEvent =
+  | { type: 'start'; total: number }
+  | PlaylistCreatedEvent
+  | PlaylistFetchedEvent
+  | PlaylistDoneEvent
+  | ContentQuotaEvent
+  | PlaylistTransferDoneEvent
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
@@ -99,7 +212,7 @@ export async function fetchSubscriptions(): Promise<SubscriptionsResponse> {
   return res.json()
 }
 
-// ── Transfer ──────────────────────────────────────────────────────────────────
+// ── Subscription Transfer ─────────────────────────────────────────────────────
 
 export async function* startTransfer(
   channelIds: string[]
@@ -116,6 +229,87 @@ export async function* startTransfer(
     throw new Error((err as any).error || 'Transfer failed')
   }
 
+  yield* streamNDJSON<TransferEvent>(res)
+}
+
+// ── Content — Watch Later ─────────────────────────────────────────────────────
+
+export async function fetchWatchLater(): Promise<WatchLaterResponse> {
+  const res = await fetch('/api/content/watchlater', { credentials: 'include' })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    const error = err as any
+    if (error.error === 'api_limitation') {
+      throw new Error('api_limitation:' + (error.message || ''))
+    }
+    throw new Error(error.error || 'Failed to fetch Watch Later')
+  }
+  return res.json()
+}
+
+export async function* transferWatchLater(
+  videoIds: string[]
+): AsyncGenerator<ContentEvent> {
+  const res = await fetch('/api/content/watchlater/transfer', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ videoIds }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error((err as any).error || 'Transfer failed')
+  }
+  yield* streamNDJSON<ContentEvent>(res)
+}
+
+// ── Content — Playlists ───────────────────────────────────────────────────────
+
+export async function fetchPlaylists(): Promise<PlaylistsResponse> {
+  const res = await fetch('/api/content/playlists', { credentials: 'include' })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error((err as any).error || 'Failed to fetch playlists')
+  }
+  return res.json()
+}
+
+export async function fetchPlaylistVideos(playlistId: string): Promise<PlaylistVideosResponse> {
+  const res = await fetch(`/api/content/playlists/${playlistId}/videos`, {
+    credentials: 'include',
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error((err as any).error || 'Failed to fetch playlist videos')
+  }
+  return res.json()
+}
+
+export async function* transferPlaylists(
+  playlists: Array<{
+    playlistId: string
+    title: string
+    description: string
+    privacy: string
+    videoCount: number
+  }>
+): AsyncGenerator<PlaylistTransferEvent> {
+  const res = await fetch('/api/content/playlists/transfer', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ playlists }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error((err as any).error || 'Transfer failed')
+  }
+  yield* streamNDJSON<PlaylistTransferEvent>(res)
+}
+
+// ── Shared NDJSON stream reader ───────────────────────────────────────────────
+
+async function* streamNDJSON<T>(res: Response): AsyncGenerator<T> {
   const reader = res.body!.getReader()
   const decoder = new TextDecoder()
   let buffer = ''
@@ -132,7 +326,7 @@ export async function* startTransfer(
       const trimmed = line.trim()
       if (!trimmed) continue
       try {
-        yield JSON.parse(trimmed) as TransferEvent
+        yield JSON.parse(trimmed) as T
       } catch {
         // ignore malformed lines
       }
