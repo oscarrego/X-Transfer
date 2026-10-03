@@ -1,4 +1,4 @@
-# X Transfer - YouTube Subscription Migrator
+# X Transfer - YouTube Migrator
 
 Transfer all your YouTube subscriptions from one Google account to another in one click.
 
