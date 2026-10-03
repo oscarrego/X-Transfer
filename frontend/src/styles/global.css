@@ -822,3 +822,141 @@ input[type="checkbox"] {
   border-bottom-color: var(--black);
   font-weight: 600;
 }
+
+/* ── Stepper Component ───────────────────────────────────────────────────────── */
+.stepper-container {
+  display: flex;
+  flex-direction: column;
+  max-width: 520px;
+}
+
+.step-item {
+  display: flex;
+  gap: 14px;
+  position: relative;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.step-item:not(:last-child) {
+  padding-bottom: 24px;
+}
+
+/* Connecting vertical line */
+.step-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 26px;
+  left: 12px;
+  bottom: 0;
+  width: 2px;
+  background: var(--gray-200);
+  transition: background 0.4s ease;
+}
+
+.step-item.step-done:not(:last-child)::after {
+  background: var(--success);
+}
+
+.step-badge {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+  z-index: 1;
+  background: var(--white);
+  transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Upcoming step */
+.step-item.step-upcoming {
+  opacity: 0.45;
+}
+
+.step-item.step-upcoming .step-badge {
+  border: 1px solid var(--gray-300);
+  color: var(--gray-400);
+}
+
+.step-item.step-upcoming .step-title {
+  color: var(--gray-500);
+}
+
+/* Active / Current step */
+.step-item.step-active {
+  opacity: 1;
+  animation: stepFadeIn 0.35s ease forwards;
+}
+
+.step-item.step-active .step-badge {
+  border: 2px solid var(--black);
+  background: var(--black);
+  color: var(--white);
+  transform: scale(1.06);
+  box-shadow: 0 0 0 3px var(--gray-100);
+}
+
+/* Completed step */
+.step-item.step-done {
+  opacity: 1;
+}
+
+.step-item.step-done .step-badge {
+  border: none;
+  background: var(--success);
+  color: var(--white);
+  animation: stepPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes stepPop {
+  0% {
+    transform: scale(0.8);
+  }
+  60% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes stepFadeIn {
+  from {
+    opacity: 0.6;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.step-body {
+  flex: 1;
+}
+
+.step-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--black);
+  transition: color 0.2s ease;
+}
+
+.step-sub {
+  font-size: 12px;
+  color: var(--gray-500);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+.step-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}

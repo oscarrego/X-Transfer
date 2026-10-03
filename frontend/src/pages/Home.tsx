@@ -52,6 +52,7 @@ export default function Home() {
 
   const bothConnected = status.source.connected && status.target.connected
   const sourceConnected = status.source.connected
+  const targetConnected = status.target.connected
 
   return (
     <>
@@ -80,47 +81,39 @@ export default function Home() {
             <hr className="divider" />
 
             <div className="section-label">Next Steps</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 520 }}>
+            <div className="stepper-container">
               <StepRow
                 num={1}
                 done={sourceConnected}
+                active={!sourceConnected}
                 label="Connect your old (source) account"
-                sub="Read-only access — we only fetch your subscription list"
+                sub="Read-only access - we only fetch your subscription list"
               />
               <StepRow
                 num={2}
-                done={status.target.connected}
+                done={targetConnected}
+                active={sourceConnected && !targetConnected}
                 label="Connect your new (target) account"
                 sub="Write access needed to subscribe to channels"
               />
               <StepRow
                 num={3}
                 done={false}
-                disabled={!sourceConnected}
-                label="Fetch and review your subscriptions"
-                sub="Browse all channels, copy links, or select specific ones"
-                action={
-                  <Link to="/subscriptions">
-                    <button className="btn btn-outline btn-sm" disabled={!sourceConnected}>
-                      View subscriptions →
-                    </button>
-                  </Link>
-                }
-              />
-              <StepRow
-                num={4}
-                done={false}
-                disabled={!bothConnected}
-                label="Transfer subscriptions"
-                sub="One click to subscribe your new account to all selected channels"
-                action={
-                  <Link to="/transfer">
-                    <button className="btn btn-accent btn-sm" disabled={!bothConnected}>
-                      Start transfer →
-                    </button>
-                  </Link>
-                }
-              />
+                active={bothConnected}
+                label="Review and transfer subscriptions"
+                sub="Browse all channels, select what to migrate, or start the transfer directly"
+              >
+                <Link to="/subscriptions">
+                  <button className="btn btn-outline btn-sm" disabled={!sourceConnected}>
+                    View subscriptions →
+                  </button>
+                </Link>
+                <Link to="/transfer">
+                  <button className="btn btn-accent btn-sm" disabled={!bothConnected}>
+                    Start transfer →
+                  </button>
+                </Link>
+              </StepRow>
             </div>
 
             <hr className="divider" />
@@ -149,51 +142,31 @@ export default function Home() {
 function StepRow({
   num,
   done,
-  disabled,
+  active,
   label,
   sub,
-  action,
+  children,
 }: {
   num: number
   done: boolean
-  disabled?: boolean
+  active: boolean
   label: string
   sub: string
-  action?: React.ReactNode
+  children?: React.ReactNode
 }) {
+  const statusClass = done
+    ? 'step-done'
+    : active
+    ? 'step-active'
+    : 'step-upcoming'
+
   return (
-    <div
-      style={{
-        display: 'flex',
-        gap: 12,
-        alignItems: 'flex-start',
-        opacity: disabled ? 0.45 : 1,
-        transition: 'opacity 0.2s',
-      }}
-    >
-      <div
-        style={{
-          width: 24,
-          height: 24,
-          borderRadius: '50%',
-          border: done ? 'none' : '1px solid var(--gray-300)',
-          background: done ? 'var(--success)' : 'transparent',
-          color: done ? 'var(--white)' : 'var(--gray-500)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 11,
-          fontWeight: 600,
-          flexShrink: 0,
-          marginTop: 1,
-        }}
-      >
-        {done ? '✓' : num}
-      </div>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 14, fontWeight: 500 }}>{label}</div>
-        <div className="text-muted" style={{ marginTop: 2 }}>{sub}</div>
-        {action && <div style={{ marginTop: 8 }}>{action}</div>}
+    <div className={`step-item ${statusClass}`}>
+      <div className="step-badge">{done ? '✓' : num}</div>
+      <div className="step-body">
+        <div className="step-title">{label}</div>
+        <div className="step-sub">{sub}</div>
+        {children && <div className="step-actions">{children}</div>}
       </div>
     </div>
   )
