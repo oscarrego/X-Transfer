@@ -17,30 +17,19 @@ automatically - with live progress, pause/resume support, and a full transfer lo
 
 ---
 
-## How It Works
-
-1. You connect your **old Google account** (source) - read-only access to fetch your subscription list
-2. You connect your **new Google account** (target) - write access to subscribe to channels
-3. The app fetches all subscribed channels from the source account
-4. You review, search, and select which channels to transfer (or select all)
-5. Click **Start Transfer** - the app subscribes the target account to each channel one by one
-6. Watch live progress with per-channel status (subscribed / skipped / failed)
-7. When done, review any skipped or failed channels with their names and links
-
----
-
 ## Features
 
-- Dual Google OAuth - two separate accounts, each with proper scopes
-- Full subscription list with search, filter, and checkboxes
-- Copy individual channel links or all links to clipboard
-- Live streaming transfer progress (no page reload needed)
-- Pause and resume mid-transfer
-- Stop button to cancel at any time
-- Quota exceeded detection with popup notification
-- Skipped and failed channels shown with names, links, and copy button
-- Export full transfer log as a .txt file
-- Done button at the bottom redirects back to home
+- Dual Google OAuth - separate source (read) and target (write) authorization
+- Persistent local session storage - accounts stay connected across browser reloads and restarts
+- Subscription migration - searchable channel list, selection controls, and individual/bulk link copying
+- Playlist transfer - migrate custom playlists with video order, descriptions, and privacy settings
+- Watch Later support - fetch and transfer Watch Later video items
+- Real-time streaming progress - live per-item updates without page refreshes
+- Full transfer controls - pause, resume, or cancel at any moment
+- Automatic quota handling - detects daily limits and cleanly alerts you without breaking state
+- Result review - easily view skipped or failed items with direct links and copy buttons
+- Export logs - download full transfer records as a .txt file
+- One-click launcher - start both frontend and backend instantly with `start.bat`
 
 ---
 
@@ -69,7 +58,7 @@ To increase your quota, visit: https://console.cloud.google.com and request a qu
 
 ---
 
-## Google Cloud Setup (One-Time, 10 Minutes)
+## Google Cloud Setup
 
 ### Step 1 - Create a Google Cloud Project
 
@@ -193,5 +182,5 @@ This is normal for personal apps in testing mode. To proceed:
 - Backend: Node.js + Express + TypeScript
 - Auth: Google OAuth 2.0 via googleapis library
 - YouTube: YouTube Data API v3
-- Sessions: express-session (in-memory, no database needed)
+- Sessions: express-session with local persistent storage (no external database needed)
 - Streaming: NDJSON chunked response for real-time transfer progress
