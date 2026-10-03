@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import {
   getAuthStatus,
   fetchWatchLater,
@@ -213,7 +213,12 @@ function VideoTable({
 
 // ── Watch Later Tab ───────────────────────────────────────────────────────────
 
-function WatchLaterTab() {
+interface TabProps {
+  sourceConnected: boolean | null
+  targetConnected: boolean | null
+}
+
+function WatchLaterTab({ sourceConnected, targetConnected }: TabProps) {
   const [videos, setVideos] = useState<VideoItem[]>([])
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(false)
@@ -242,7 +247,7 @@ function WatchLaterTab() {
     } catch (err: any) {
       if (err.message?.startsWith('api_limitation:')) {
         setApiBlocked(true)
-      } else {
+      } else if (!err.message?.toLowerCase().includes('not connected')) {
         setError(err.message || 'Failed to fetch Watch Later')
       }
     } finally {
@@ -317,7 +322,12 @@ function WatchLaterTab() {
         </div>
         <div className="ml-auto flex-row" style={{ gap: 8 }}>
           {!transferring && !transferDone && (
-            <button className="btn btn-outline btn-sm" onClick={load} disabled={loading}>
+            <button
+              className="btn btn-outline btn-sm"
+              onClick={load}
+              disabled={loading || !sourceConnected}
+              title={!sourceConnected ? 'Connect your account in Accounts first' : undefined}
+            >
               {loading ? <><span className="spinner" /> Fetching...</> : videos.length > 0 ? '↺ Refresh' : 'Fetch Watch Later'}
             </button>
           )}
@@ -325,7 +335,8 @@ function WatchLaterTab() {
             <button
               className="btn btn-accent"
               onClick={startTransfer}
-              disabled={selectedCount === 0}
+              disabled={selectedCount === 0 || !targetConnected}
+              title={!targetConnected ? 'Connect target account in Accounts first' : undefined}
             >
               Transfer {selectedCount} videos
             </button>
@@ -375,13 +386,15 @@ function WatchLaterTab() {
         </div>
       )}
 
-      {error && isQuotaExceeded(error) ? (
-        <QuotaNotice onDismiss={() => setError(null)} customMessage={error} />
-      ) : error ? (
-        <div className="info-box" style={{ background: 'var(--error-light)', color: 'var(--error)', border: '1px solid #ffc9c9' }}>
-          <span>x</span><span>{error}</span>
-        </div>
-      ) : null}
+      {error && !error.toLowerCase().includes('not connected') && (
+        isQuotaExceeded(error) ? (
+          <QuotaNotice onDismiss={() => setError(null)} customMessage={error} />
+        ) : (
+          <div className="info-box" style={{ background: 'var(--error-light)', color: 'var(--error)', border: '1px solid #ffc9c9' }}>
+            <span>x</span><span>{error}</span>
+          </div>
+        )
+      )}
 
       {/* Transfer progress */}
       {(transferring || transferDone) && (
@@ -435,10 +448,14 @@ function WatchLaterTab() {
         />
       )}
 
-      {!loading && !error && !apiBlocked && videos.length === 0 && !transferring && (
+      {!loading && (!error || error.toLowerCase().includes('not connected')) && !apiBlocked && videos.length === 0 && !transferring && (
         <div className="empty-state">
           <div className="empty-state-title">No videos loaded</div>
-          <div className="empty-state-sub">Click "Fetch Watch Later" to load your Watch Later playlist</div>
+          <div className="empty-state-sub">
+            {sourceConnected
+              ? 'Click "Fetch Watch Later" to load your Watch Later playlist'
+              : 'Connect your account in the Accounts tab to get started'}
+          </div>
         </div>
       )}
     </div>
@@ -447,7 +464,7 @@ function WatchLaterTab() {
 
 // ── Playlists Tab ─────────────────────────────────────────────────────────────
 
-function PlaylistsTab() {
+function PlaylistsTab({ sourceConnected, targetConnected }: TabProps) {
   const [playlists, setPlaylists] = useState<PlaylistItem[]>([])
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [loadingVideos, setLoadingVideos] = useState<Set<string>>(new Set())
@@ -475,7 +492,9 @@ function PlaylistsTab() {
       setPlaylists(res.playlists)
       setSelected(new Set(res.playlists.map((p) => p.playlistId)))
     } catch (err: any) {
-      setError(err.message || 'Failed to fetch playlists')
+      if (!err.message?.toLowerCase().includes('not connected')) {
+        setError(err.message || 'Failed to fetch playlists')
+      }
     } finally {
       setLoading(false)
     }
@@ -579,7 +598,12 @@ function PlaylistsTab() {
         </div>
         <div className="ml-auto flex-row" style={{ gap: 8 }}>
           {!transferring && !transferDone && (
-            <button className="btn btn-outline btn-sm" onClick={load} disabled={loading}>
+            <button
+              className="btn btn-outline btn-sm"
+              onClick={load}
+              disabled={loading || !sourceConnected}
+              title={!sourceConnected ? 'Connect your account in Accounts first' : undefined}
+            >
               {loading ? <><span className="spinner" /> Fetching...</> : playlists.length > 0 ? '↺ Refresh' : 'Fetch Playlists'}
             </button>
           )}
@@ -587,7 +611,8 @@ function PlaylistsTab() {
             <button
               className="btn btn-accent"
               onClick={startTransferPlaylists}
-              disabled={selected.size === 0}
+              disabled={selected.size === 0 || !targetConnected}
+              title={!targetConnected ? 'Connect target account in Accounts first' : undefined}
             >
               Transfer {selected.size} playlist{selected.size !== 1 ? 's' : ''}
             </button>
@@ -618,13 +643,15 @@ function PlaylistsTab() {
         </div>
       </div>
 
-      {error && isQuotaExceeded(error) ? (
-        <QuotaNotice onDismiss={() => setError(null)} customMessage={error} />
-      ) : error ? (
-        <div className="info-box" style={{ background: 'var(--error-light)', color: 'var(--error)', border: '1px solid #ffc9c9' }}>
-          <span>x</span><span>{error}</span>
-        </div>
-      ) : null}
+      {error && !error.toLowerCase().includes('not connected') && (
+        isQuotaExceeded(error) ? (
+          <QuotaNotice onDismiss={() => setError(null)} customMessage={error} />
+        ) : (
+          <div className="info-box" style={{ background: 'var(--error-light)', color: 'var(--error)', border: '1px solid #ffc9c9' }}>
+            <span>x</span><span>{error}</span>
+          </div>
+        )
+      )}
 
       {/* Quota estimate warning */}
       {!transferring && !transferDone && playlists.length > 0 && selected.size > 0 && (
@@ -822,10 +849,14 @@ function PlaylistsTab() {
         </div>
       )}
 
-      {!loading && !error && playlists.length === 0 && !transferring && (
+      {!loading && (!error || error.toLowerCase().includes('not connected')) && playlists.length === 0 && !transferring && (
         <div className="empty-state">
           <div className="empty-state-title">No playlists loaded</div>
-          <div className="empty-state-sub">Click "Fetch Playlists" to load your created playlists</div>
+          <div className="empty-state-sub">
+            {sourceConnected
+              ? 'Click "Fetch Playlists" to load your created playlists'
+              : 'Connect your account in the Accounts tab to get started'}
+          </div>
         </div>
       )}
     </div>
@@ -859,31 +890,6 @@ export default function Content() {
           Transfer your Watch Later videos and created playlists to your new account.
         </div>
 
-        {sourceConnected === false && (
-          <div className="info-box info-box-warn mb-16">
-            <span>⚠</span>
-            <span>
-              Source account not connected.{' '}
-              <Link to="/" style={{ textDecoration: 'underline', fontWeight: 500 }}>
-                Connect it on the Accounts page →
-              </Link>
-            </span>
-          </div>
-        )}
-
-        {sourceConnected === true && targetConnected === false && (
-          <div className="info-box info-box-note mb-16">
-            <span>ⓘ</span>
-            <span>
-              Target account not connected.{' '}
-              <Link to="/" style={{ textDecoration: 'underline', fontWeight: 500 }}>
-                Connect it on the Accounts page →
-              </Link>{' '}
-              before running a transfer.
-            </span>
-          </div>
-        )}
-
         {/* Tab switcher */}
         <div className="content-tabs mb-24">
           <button
@@ -900,8 +906,12 @@ export default function Content() {
           </button>
         </div>
 
-        {tab === 'playlists' && <PlaylistsTab />}
-        {tab === 'watchlater' && <WatchLaterTab />}
+        {tab === 'playlists' && (
+          <PlaylistsTab sourceConnected={sourceConnected} targetConnected={targetConnected} />
+        )}
+        {tab === 'watchlater' && (
+          <WatchLaterTab sourceConnected={sourceConnected} targetConnected={targetConnected} />
+        )}
       </main>
     </>
   )

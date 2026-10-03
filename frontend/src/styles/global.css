@@ -195,9 +195,12 @@ a:hover {
   user-select: none;
 }
 
-.btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+.btn:disabled,
+.btn[disabled] {
+  opacity: 0.35;
+  cursor: not-allowed !important;
+  pointer-events: auto;
+  box-shadow: none;
 }
 
 .btn-primary {

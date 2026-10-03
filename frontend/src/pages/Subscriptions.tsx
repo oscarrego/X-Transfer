@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { fetchSubscriptions, getAuthStatus, Channel, copyToClipboard } from '../lib/api'
 import ChannelTable from '../components/ChannelTable'
 import QuotaNotice, { isQuotaExceeded } from '../components/QuotaNotice'
@@ -84,6 +84,7 @@ export default function Subscriptions() {
                 className="btn btn-primary"
                 onClick={load}
                 disabled={loading || !sourceConnected}
+                title={!sourceConnected ? 'Connect your account in Accounts first' : undefined}
               >
                 {loading ? (
                   <>
@@ -105,29 +106,25 @@ export default function Subscriptions() {
           </div>
         </div>
 
-        {sourceConnected === false && (
-          <div className="info-box info-box-warn">
-            <span>⚠</span>
-            <span>
-              Source account not connected.{' '}
-              <Link to="/">Connect it first →</Link>
-            </span>
-          </div>
+        {error && !error.toLowerCase().includes('not connected') && (
+          isQuotaExceeded(error) ? (
+            <QuotaNotice onDismiss={() => setError(null)} customMessage={error} />
+          ) : (
+            <div className="info-box" style={{ background: 'var(--error-light)', color: 'var(--error)', border: '1px solid #ffc9c9' }}>
+              <span>✗</span>
+              <span>{error}</span>
+            </div>
+          )
         )}
 
-        {error && isQuotaExceeded(error) ? (
-          <QuotaNotice onDismiss={() => setError(null)} customMessage={error} />
-        ) : error ? (
-          <div className="info-box" style={{ background: 'var(--error-light)', color: 'var(--error)', border: '1px solid #ffc9c9' }}>
-            <span>✗</span>
-            <span>{error}</span>
-          </div>
-        ) : null}
-
-        {channels.length === 0 && !loading && !error && sourceConnected && (
+        {channels.length === 0 && !loading && (!error || error.toLowerCase().includes('not connected')) && (
           <div className="empty-state">
             <div className="empty-state-title">No subscriptions loaded</div>
-            <div className="empty-state-sub">Click "Fetch subscriptions" to load your channel list</div>
+            <div className="empty-state-sub">
+              {sourceConnected
+                ? 'Click "Fetch subscriptions" to load your channel list'
+                : 'Connect your account in the Accounts tab to get started'}
+            </div>
           </div>
         )}
 
