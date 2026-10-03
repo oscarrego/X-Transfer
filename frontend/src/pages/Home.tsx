@@ -7,7 +7,7 @@ function Topbar({ active }: { active?: string }) {
   return (
     <nav className="topbar">
       <div className="topbar-inner">
-        <Link to="/" className="topbar-brand" title="X Transfer - Home">
+        <Link to="/" className="topbar-brand">
           <span className="brand-badge">X</span>
           <span className="brand-name">Transfer</span>
         </Link>

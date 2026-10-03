@@ -85,14 +85,10 @@ a:hover {
   align-items: center;
   gap: 7px;
   text-decoration: none;
-  padding: 4px 8px 4px 4px;
-  border-radius: var(--radius);
-  transition: background 0.12s ease;
   user-select: none;
 }
 
 .topbar-brand:hover {
-  background: var(--gray-100);
   text-decoration: none;
 }
 
